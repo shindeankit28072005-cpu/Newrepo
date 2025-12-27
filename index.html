@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maze Runner – Infinite Growth</title>
+
+<style>
+html,body{
+  margin:0;
+  padding:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:white;
+}
+canvas{display:block;}
+
+#centerText{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;
+  color:black;
+  font-family:Arial,sans-serif;
+  letter-spacing:4px;
+  z-index:5;
+  pointer-events:none;
+}
+#centerText h1{
+  margin:0;
+  font-size:42px;
+  opacity:0.9;
+  animation: glow 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes glow{
+  from{ text-shadow:0 0 6px rgba(0,0,0,0.4); }
+  to{ text-shadow:0 0 16px rgba(0,0,0,0.7); }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="c"></canvas>
+<div id="centerText"><h1>MAZE RUNNER</h1></div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+function resize(){
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener('resize', resize);
+
+const cols = 64;
+const rows = 40;
+
+let grid, active;
+const cx = Math.floor(cols/2);
+const cy = Math.floor(rows/2);
+
+function resetMaze(){
+  grid = new Array(cols * rows).fill(0);
+  active = [[cx, cy]];
+}
+resetMaze();
+
+let last = 0;
+
+function step(t){
+  if(t - last < 16){
+    requestAnimationFrame(step);
+    return;
+  }
+  last = t;
+
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  const cw = canvas.width / cols;
+  const ch = canvas.height / rows;
+
+  ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx.lineWidth = 1.1;
+
+  const next = [];
+
+  for(const [x,y] of active){
+    const i = y * cols + x;
+    if(grid[i]) continue;
+    grid[i] = 1;
+
+    const px = x * cw + cw/2;
+    const py = y * ch + ch/2;
+
+    ctx.beginPath();
+    ctx.arc(px, py, Math.min(cw,ch) * 0.25, 0, Math.PI*2);
+    ctx.stroke();
+
+    [[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{
+      const nx = x + dx;
+      const ny = y + dy;
+      if(
+        nx>=0 && ny>=0 &&
+        nx<cols && ny<rows &&
+        !grid[ny*cols+nx] &&
+        Math.random() > 0.35
+      ){
+        next.push([nx,ny]);
+      }
+    });
+  }
+
+  if(next.length){
+    active = next;
+  }else{
+    resetMaze(); // 🔁 full grow ke baad restart
+  }
+
+  requestAnimationFrame(step);
+}
+
+requestAnimationFrame(step);
+</script>
+
+</body>
+</html>
